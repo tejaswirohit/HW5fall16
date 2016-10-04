@@ -44,14 +44,9 @@ Given /^I am on the RottenPotatoes home page$/ do
 
 
 # Add a declarative step here for populating the DB with movies.
-
 Given /the following movies have been added to RottenPotatoes:/ do |movies_table|
-  pending  # Remove this statement when you finish implementing the test step
   movies_table.hashes.each do |movie|
-    # Each returned movie will be a hash representing one row of the movies_table
-    # The keys will be the table headers and the values will be the row contents.
-    # Entries can be directly to the database with ActiveRecord methods
-    # Add the necessary Active Record call(s) to populate the database.
+    Movie.create(movie)
   end
 end
 
@@ -59,16 +54,64 @@ When /^I have opted to see movies rated: "(.*?)"$/ do |arg1|
   # HINT: use String#split to split up the rating_list, then
   # iterate over the ratings and check/uncheck the ratings
   # using the appropriate Capybara command(s)
-  pending  #remove this statement after implementing the test step
+  visit movies_path
+  ratings = arg1.split(', ')
+  all("input[type='checkbox']").each{|box| box.set(false)}
+  ratings.each do |rating|
+    print 
+    check("ratings_#{rating}")
+  end
+  click_button("ratings_submit")
 end
 
 Then /^I should see only movies rated: "(.*?)"$/ do |arg1|
-  pending  #remove this statement after implementing the test step
+  ratings = arg1.split(', ')
+  result = true
+    all("tr > td:nth-child(2)").each do |tr|
+      if !(ratings.include?(tr.text))
+       result = false
+        break
+      end
+    end  
+    expect(result).to be_truthy
 end
 
 Then /^I should see all of the movies$/ do
-  pending  #remove this statement after implementing the test step
+  row_count = all("tr").count
+  all("input[type='checkbox']").each{|box| box.set(true)}
+  click_button("ratings_submit")
+  all_count = all("tr").count
+  expect(all_count).to eql(row_count)
 end
 
+When /^I sort movies alphabetically$/ do
+  click_on("title_header")
+end
+
+When /^I sort movies order of release date$/ do
+  click_on("release_date_header")
+end
+
+Then /^I should see "(.*?)" before "(.*?)" in Movie Title$/ do |arg1, arg2|
+  items = []
+  all("tr > td:nth-child(1)").each do |object|
+    items.push(object.text)
+  end
+  arg1_index = items.index(arg1)
+  arg2_index = items.index(arg2)
+
+  expect(arg1_index).to be < arg2_index
+end
+
+Then /^I should see "(.*?)" before "(.*?)" in Release Date$/ do |arg1, arg2|
+  items = []
+  all("tr > td:nth-child(3)").each do |object|
+    items.push(object.text)
+  end
+  arg1_index = items.index(arg1)
+  arg2_index = items.index(arg2)
+
+  expect(arg1_index).to be < arg2_index
+end
 
 
